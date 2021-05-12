@@ -4,9 +4,10 @@ namespace DatabaseHandler
 	{
 		public override string ToString()
 		{
-			string result = "";
+			string result = GetType().Name + " {\n";
 			foreach (var prop in GetType().GetProperties())
-				result += prop.Name + "=" + prop.GetValue(this, null)?.ToString() + "\n";
+				result += "\t" + prop.Name + ": " + prop.GetValue(this, null)?.ToString() + "\n";
+			result += "}";
 			return result;
 		}
 	}
