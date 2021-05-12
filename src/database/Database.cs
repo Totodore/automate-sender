@@ -24,7 +24,7 @@ namespace DatabaseHandler
 		{
 			using var context = new DatabaseContext();
 			return await context.Messages
-			.Where(el => (el.Activated && el.Type == MessageType.FREQUENTIAL) || (el.Type == MessageType.PONCTUAL && el.Date > minDate && el.Date < maxDate))
+			.Where(el => el.Activated && (el.TypeEnum == 1 || (el.TypeEnum == 0 && el.Date > minDate && el.Date < maxDate)))
 			.Include(el => el.Guild)
 			.Include(el => el.Files)
 			.ToListAsync() ?? new List<MessageEntity>();
