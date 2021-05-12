@@ -4,12 +4,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace DatabaseHandler
 {
 	[Table("file")]
-	public class FileEntity
+	public class FileEntity : Entity
 	{
 
 		[Key]
-		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-		public int Id { get; set; }
+		public string Id { get; set; }
 
 		public string MessageId { get; set; }
 		public MessageEntity Message { get; set; }

@@ -12,6 +12,7 @@ namespace DatabaseHandler
 	{
 		public DatabaseContext() : base(Constants.connectionString)
 		{
+    	// Database.Log = Console.Write;
 			Database.SetInitializer(new CreateDatabaseIfNotExists<DatabaseContext>());
 		}
 
@@ -19,21 +20,13 @@ namespace DatabaseHandler
 		public DbSet<GuildEntity> Guilds { get; set; }
 		public DbSet<MessageEntity> Messages { get; set; }
 
-
-		protected override void OnModelCreating(DbModelBuilder modelBuilder)
-		{
-			// configures one-to-many relationship
-			modelBuilder.Entity<MessageEntity>()
-				.HasMany(s => s.Files)
-				.WithRequired(g => g.Message)
-				.HasForeignKey(s => s.MessageId);
-		}
-
 		public static async Task<List<MessageEntity>> GetAllMessages(DateTime minDate, DateTime maxDate)
 		{
 			using var context = new DatabaseContext();
 			return await context.Messages
 			.Where(el => (el.Activated && el.Type == MessageType.FREQUENTIAL) || (el.Type == MessageType.PONCTUAL && el.Date > minDate && el.Date < maxDate))
+			.Include(el => el.Guild)
+			.Include(el => el.Files)
 			.ToListAsync() ?? new List<MessageEntity>();
 		}
 
