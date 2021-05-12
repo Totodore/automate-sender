@@ -4,7 +4,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace DatabaseHandler
 {
 	[Table("file")]
-	public class FileEntity {
+	public class FileEntity
+	{
 
 		[Key]
 		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]

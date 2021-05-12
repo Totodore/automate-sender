@@ -27,7 +27,7 @@ namespace AutomateSender
 			timer.Elapsed += new ElapsedEventHandler(OnTimer);
 			timer.Enabled = true;
 			Console.WriteLine("New minute detected, thread started!");
-			while (true) { await Task.Delay(60_000); }	//Blocking Bot
+			while (true) { await Task.Delay(60_000); }  //Blocking Bot
 		}
 
 		/// <summary>
@@ -46,7 +46,9 @@ namespace AutomateSender
 				if (msg.Type == MessageType.FREQUENTIAL && CheckFreqMessage(msg))
 				{
 					//TODO: Handle thread pool
-				} else if (msg.Type == MessageType.PONCTUAL) {
+				}
+				else if (msg.Type == MessageType.PONCTUAL)
+				{
 					//TODO: Handle thread pool
 				}
 			}
@@ -59,7 +61,7 @@ namespace AutomateSender
 		/// </summary>
 		/// <param name="msg">The current freq message</param>
 		/// <returns>If the freq message should be sended at this current method</returns>
-		public bool CheckFreqMessage(MessageEntity msg) 
+		public bool CheckFreqMessage(MessageEntity msg)
 		{
 			try
 			{

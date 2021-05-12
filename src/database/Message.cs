@@ -6,7 +6,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace DatabaseHandler
 {
 	[Table("message")]
-	public class MessageEntity {
+	public class MessageEntity
+	{
 		[Key]
 		public string Id { get; set; }
 		public string ChannelId { get; set; }
@@ -25,8 +26,9 @@ namespace DatabaseHandler
 		public bool Activated { get; set; }
 		public DateTime UpdatedDate { get; set; }
 	}
-	public enum MessageType {
+	public enum MessageType
+	{
 		PONCTUAL,
-  	FREQUENTIAL
+		FREQUENTIAL
 	}
 }

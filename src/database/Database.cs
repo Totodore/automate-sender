@@ -30,7 +30,7 @@ namespace DatabaseHandler
 		}
 
 		public static async Task<List<MessageEntity>> GetAllMessages(DateTime minDate, DateTime maxDate)
-		{ 
+		{
 			using var context = new DatabaseContext();
 			return await context.Messages
 			.Where(el => (el.Activated && el.Type == MessageType.FREQUENTIAL) || (el.Type == MessageType.PONCTUAL && el.Date > minDate && el.Date < maxDate))
