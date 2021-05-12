@@ -1,0 +1,5 @@
+/.env
+/.vscode
+/bin
+/obj
+/packages-microsoft-prod.deb
