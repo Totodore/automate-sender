@@ -54,15 +54,20 @@ namespace AutomateSender
 			maxDate = TimeHelpers.TimestampToDateTime(60_000 - TimeHelpers.CurrentTimeMillis() % 60_000 + TimeHelpers.CurrentTimeMillis());
 			minDate = TimeHelpers.TimestampToDateTime(TimeHelpers.CurrentTimeMillis() - (TimeHelpers.CurrentTimeMillis() % 60_000));
 			var data = await DatabaseContext.GetAllMessages(minDate, maxDate);
+			var i = 0;
 			foreach (var msg in data)
 			{
 				if (msg.Type == DatabaseHandler.MessageType.FREQUENTIAL && CheckFreqMessage(msg))
 				{
+
 					//TODO: Handle thread pool
+					SendMessage(msg);
+					i++;
 				}
 				else if (msg.Type == DatabaseHandler.MessageType.PONCTUAL)
 				{
 					//TODO: Handle thread pool
+					i++;
 				}
 			}
 		}
@@ -81,7 +86,7 @@ namespace AutomateSender
 				var cron = CronExpression.Parse(msg.Cron);
 				var timezone = TimeZoneInfo.FindSystemTimeZoneById(msg.Guild.Timezone);
 				var next = cron.GetNextOccurrence(DateTimeOffset.UtcNow, timezone);
-				return next > minDate && next < maxDate;
+				return next > minDate && next <= maxDate;
 			}
 			catch (CronFormatException)
 			{
@@ -123,7 +128,10 @@ namespace AutomateSender
 						continue;
 					}
 				}
-				await channel.SendMessageAsync(msg.ParsedMessage);
+				if (channel == null) {
+					throw new Exception("No Channel found");
+				}
+				await channel?.SendMessageAsync(msg.ParsedMessage);
 			}
 			catch (Exception e)
 			{
