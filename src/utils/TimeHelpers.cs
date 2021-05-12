@@ -4,12 +4,10 @@ namespace AutomateSender
 {
 	public static class TimeHelpers
 	{
-		private static readonly DateTime Jan1st1970 = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
 		/// <returns>Returns the current timestamp</returns>
 		public static long CurrentTimeMillis()
 		{
-			return (long)(DateTime.UtcNow - Jan1st1970).TotalMilliseconds;
+			return DateTimeOffset.Now.ToUnixTimeMilliseconds();
 		}
 		/// <summary>
 		/// Convert a timestamp to a DateTime
