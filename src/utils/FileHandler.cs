@@ -5,7 +5,7 @@ namespace AutomateSender
 {
 	public class FileHandler {
 		
-		private string baseRoute;
+		private readonly string baseRoute;
 		public FileHandler() {
 			baseRoute = Path.Combine(Environment.CurrentDirectory, Environment.GetEnvironmentVariable("IMAGE_ROUTE") ?? "./data");
 			Directory.CreateDirectory(baseRoute);
