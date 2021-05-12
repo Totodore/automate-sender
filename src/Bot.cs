@@ -1,17 +1,26 @@
 using System;
+using System.Data.Entity;
 using System.Threading.Tasks;
 using System.Timers;
 using Cronos;
+using Discord;
 using DatabaseHandler;
+using Discord.WebSocket;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace AutomateSender
 {
 	public class Bot
 	{
-		public Timer timer;
+		private Timer timer;
 
-		public DateTime minDate;
-		public DateTime maxDate;
+		private DateTime minDate;
+		private DateTime maxDate;
+
+		private readonly FileHandler fileHandler = new();
+
+		private readonly DiscordSocketClient client = new();
 
 		/// <summary>
 		/// - Wait for a new minute before starting (it computes the number of remaining seconds before the new minutes and the wait this time)
@@ -21,13 +30,17 @@ namespace AutomateSender
 		/// </summary>
 		public async Task Init()
 		{
+			Console.WriteLine("Connecting to AutomateBot...");
+			await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("TOKEN_BOT"));
+			await client.StartAsync();
+			Console.WriteLine("Discord client successfully connected to AutomateBot!");
 			Console.WriteLine("Awaiting new minute before starting...");
 			await Task.Delay((int)(60_000 - TimeHelpers.CurrentTimeMillis() % 60_000));
-			timer = new Timer(3000);
+			timer = new Timer(60_000);
 			timer.Elapsed += new ElapsedEventHandler(OnTimer);
 			timer.Enabled = true;
 			Console.WriteLine("New minute detected, thread started!");
-			while (true) { await Task.Delay(60_000); }  //Blocking Bot
+			await Task.Delay(-1);
 		}
 
 		/// <summary>
@@ -43,11 +56,11 @@ namespace AutomateSender
 			var data = await DatabaseContext.GetAllMessages(minDate, maxDate);
 			foreach (var msg in data)
 			{
-				if (msg.Type == MessageType.FREQUENTIAL && CheckFreqMessage(msg))
+				if (msg.Type == DatabaseHandler.MessageType.FREQUENTIAL && CheckFreqMessage(msg))
 				{
 					//TODO: Handle thread pool
 				}
-				else if (msg.Type == MessageType.PONCTUAL)
+				else if (msg.Type == DatabaseHandler.MessageType.PONCTUAL)
 				{
 					//TODO: Handle thread pool
 				}
@@ -79,6 +92,44 @@ namespace AutomateSender
 			{
 				Console.WriteLine("Cron parsing error (not known), error : " + error);
 				return false;
+			}
+		}
+
+		/// <summary>
+		/// Send a message to a specific channel
+		/// - Get the text channel
+		/// - Foreach files we read them and we send them asynchronously
+		/// - - If there is an error while sending a file we send the next one
+		/// - We then send the message
+		/// - In case of error the message is completely logged
+		/// </summary>
+		/// <param name="msg">The message object to send</param>
+		public async void SendMessage(MessageEntity msg)
+		{
+			try
+			{
+				var channel = client.GetChannel(ulong.Parse(msg.ChannelId)) as IMessageChannel;
+				var files = msg.Files.ToList();
+				for (int i = 0; i < (msg.Files?.Count ?? 0); i++)
+				{
+					try
+					{
+						await channel.SendFileAsync(fileHandler.GetFileStream(files[i].Id), $"attachment-{i}");
+					}
+					catch (Exception e)
+					{
+						Console.WriteLine("Crash during file sending for message: " + msg);
+						Console.WriteLine("Error: " + e);
+						continue;
+					}
+				}
+				await channel.SendMessageAsync(msg.ParsedMessage);
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine("Crash during msg sending: " + msg);
+				Console.WriteLine("Error: " + e);
+				return;
 			}
 		}
 	}
