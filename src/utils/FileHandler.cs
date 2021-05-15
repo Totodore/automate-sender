@@ -4,7 +4,6 @@ using System.IO;
 namespace AutomateSender
 {
 	public class FileHandler {
-		
 		private readonly string baseRoute;
 		public FileHandler() {
 			baseRoute = Path.Combine(Environment.CurrentDirectory, Environment.GetEnvironmentVariable("IMAGE_ROUTE") ?? "./data");

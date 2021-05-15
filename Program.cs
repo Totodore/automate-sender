@@ -6,9 +6,9 @@ using dotenv.net;
 
 namespace AutomateSender
 {
-	class Program
+	public static class Program
 	{
-		static async Task Main()
+		private static async Task Main()
 		{
 			DotEnv.Load();
 			ConnectToDatabase();
@@ -20,7 +20,7 @@ namespace AutomateSender
 		/// - Build the database connection from the environment variables
 		/// - Check the connection
 		/// </summary>
-		static void ConnectToDatabase()
+		private static void ConnectToDatabase()
 		{
 			try
 			{

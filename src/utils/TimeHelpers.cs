@@ -4,7 +4,6 @@ namespace AutomateSender
 {
 	public static class TimeHelpers
 	{
-		/// <returns>Returns the current timestamp</returns>
 		public static long CurrentTimeMillis()
 		{
 			return DateTimeOffset.Now.ToUnixTimeMilliseconds();
@@ -18,8 +17,7 @@ namespace AutomateSender
 		{
 			// Unix timestamp is seconds past epoch
 			DateTime dtDateTime = new(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-			dtDateTime = dtDateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
-			return dtDateTime;
+			return dtDateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
 		}
 	}
 }

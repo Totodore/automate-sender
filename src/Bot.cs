@@ -35,9 +35,9 @@ namespace AutomateSender
 			await client.StartAsync();
 			Console.WriteLine("Discord client successfully connected to AutomateBot!");
 			Console.WriteLine("Awaiting new minute before starting...");
-			await Task.Delay((int)(60_000 - TimeHelpers.CurrentTimeMillis() % 60_000));
+			await Task.Delay((int)(60_000 - (TimeHelpers.CurrentTimeMillis() % 60_000)));
 			timer = new Timer(60_000);
-			timer.Elapsed += new ElapsedEventHandler(OnTimer);
+			timer.Elapsed += OnTimer;
 			timer.Enabled = true;
 			Console.WriteLine("New minute detected, thread started!");
 			await Task.Delay(-1);
@@ -51,7 +51,7 @@ namespace AutomateSender
 		/// </summary>
 		private async void OnTimer(object source, ElapsedEventArgs e)
 		{
-			maxDate = TimeHelpers.TimestampToDateTime(60_000 - TimeHelpers.CurrentTimeMillis() % 60_000 + TimeHelpers.CurrentTimeMillis());
+			maxDate = TimeHelpers.TimestampToDateTime(60_000 - (TimeHelpers.CurrentTimeMillis() % 60_000) + TimeHelpers.CurrentTimeMillis());
 			minDate = TimeHelpers.TimestampToDateTime(TimeHelpers.CurrentTimeMillis() - (TimeHelpers.CurrentTimeMillis() % 60_000));
 			var data = await DatabaseContext.GetAllMessages(minDate, maxDate);
 			var i = 0;
@@ -59,7 +59,6 @@ namespace AutomateSender
 			{
 				if (msg.Type == DatabaseHandler.MessageType.FREQUENTIAL && CheckFreqMessage(msg))
 				{
-
 					//TODO: Handle thread pool
 					SendMessage(msg);
 					i++;

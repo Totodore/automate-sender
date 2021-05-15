@@ -6,10 +6,8 @@ namespace DatabaseHandler
 	[Table("file")]
 	public class FileEntity : Entity
 	{
-
 		[Key]
 		public string Id { get; set; }
-
 		public string MessageId { get; set; }
 		public MessageEntity Message { get; set; }
 	}
