@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using DatabaseHandler;
 using dotenv.net;
 
@@ -16,7 +18,7 @@ namespace AutomateSender
 		}
 
 		/// <summary>
-		/// Connect to the Mysql Database 
+		/// Connect to the Mysql Database
 		/// - Build the database connection from the environment variables
 		/// - Check the connection
 		/// </summary>

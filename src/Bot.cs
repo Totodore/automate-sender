@@ -8,12 +8,13 @@ using DatabaseHandler;
 using Discord.WebSocket;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace AutomateSender
 {
 	public class Bot
 	{
-		private Timer timer;
+		private System.Timers.Timer timer;
 
 		private DateTime minDate;
 		private DateTime maxDate;
@@ -36,7 +37,7 @@ namespace AutomateSender
 			Console.WriteLine("Discord client successfully connected to AutomateBot!");
 			Console.WriteLine("Awaiting new minute before starting...");
 			await Task.Delay((int)(60_000 - (TimeHelpers.CurrentTimeMillis() % 60_000)));
-			timer = new Timer(60_000);
+			timer = new System.Timers.Timer(60_000);
 			timer.Elapsed += OnTimer;
 			timer.Enabled = true;
 			Console.WriteLine("New minute detected, thread started!");
@@ -47,7 +48,7 @@ namespace AutomateSender
 		/// - Get the date with the minute above this one
 		/// - Get the date with the current minute but without any seconds
 		/// - Get all the messages to send (all freq and current ponctual)
-		/// - foreach message it checks if it has to be sended and then add it to the thread pool 
+		/// - foreach message it checks if it has to be sended and then add it to the thread pool
 		/// </summary>
 		private async void OnTimer(object source, ElapsedEventArgs e)
 		{
@@ -59,22 +60,25 @@ namespace AutomateSender
 			{
 				if (msg.Type == DatabaseHandler.MessageType.FREQUENTIAL && CheckFreqMessage(msg))
 				{
-					//TODO: Handle thread pool
-					SendMessage(msg);
+					ThreadPool.QueueUserWorkItem((object _) => SendMessage(msg));
 					i++;
 				}
 				else if (msg.Type == DatabaseHandler.MessageType.PONCTUAL)
 				{
-					//TODO: Handle thread pool
+					ThreadPool.QueueUserWorkItem((object _) => SendMessage(msg));
 					i++;
 				}
 			}
+			if (ThreadHelpers.WaitForThreads(120))
+				Console.WriteLine("Threadpool timed out!");
+			else
+				Console.WriteLine("Threadpool ended");
 		}
 
 		/// <summary>
 		/// Checks with the lib cronos if the next cron occurrence is now
 		/// It uses the cron expression in the message and the guild timezone
-		/// In case of error it returs false 
+		/// In case of error it returs false
 		/// </summary>
 		/// <param name="msg">The current freq message</param>
 		/// <returns>If the freq message should be sended at this current method</returns>
