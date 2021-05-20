@@ -72,7 +72,7 @@ namespace AutomateSender
 			if (ThreadHelpers.WaitForThreads(120))
 				Console.WriteLine("Threadpool timed out!");
 			else
-				Console.WriteLine("Threadpool ended");
+				Console.WriteLine("Threadpool ended with " + i + " messages sent");
 		}
 
 		/// <summary>
