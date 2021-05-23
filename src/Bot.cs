@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 using System.Timers;
 using Cronos;
 using Discord;
-using DatabaseHandler;
 using Discord.WebSocket;
 using System.Linq;
 using System.Threading;
+using AutomateSender.DatabaseHandler;
 
 namespace AutomateSender
 {

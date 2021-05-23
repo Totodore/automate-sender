@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using DatabaseHandler;
+using AutomateSender.DatabaseHandler;
 using dotenv.net;
-using TimeZoneConverter;
 
 namespace AutomateSender
 {

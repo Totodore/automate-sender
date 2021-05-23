@@ -1,4 +1,4 @@
-namespace DatabaseHandler
+namespace AutomateSender.DatabaseHandler
 {
 	public abstract class Entity
 	{

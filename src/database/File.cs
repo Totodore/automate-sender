@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace DatabaseHandler
+namespace AutomateSender.DatabaseHandler
 {
 	[Table("file")]
 	public class FileEntity : Entity
