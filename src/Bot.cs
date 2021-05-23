@@ -1,15 +1,12 @@
 using System;
-using System.Data.Entity;
 using System.Threading.Tasks;
 using System.Timers;
 using Cronos;
 using Discord;
 using DatabaseHandler;
 using Discord.WebSocket;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using TimeZoneConverter;
 
 namespace AutomateSender
 {
@@ -88,7 +85,7 @@ namespace AutomateSender
 			try
 			{
 				var cron = CronExpression.Parse(msg.Cron);
-				var timezone = TimeZoneInfo.FindSystemTimeZoneById(TZConvert.IanaToWindows(msg.Guild.Timezone));
+				var timezone = TimeZoneInfo.FindSystemTimeZoneById(msg.Guild.Timezone);
 				var next = cron.GetNextOccurrence(DateTimeOffset.UtcNow, timezone);
 				return next > minDate && next <= maxDate;
 			}
