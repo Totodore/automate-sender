@@ -37,7 +37,7 @@ namespace AutomateSender
 			await client.StartAsync();
 			Log.Information("Discord client successfully connected to AutomateBot!");
 			Log.Information("Awaiting new minute before starting...");
-			//await Task.Delay((int)(60_000 - (TimeHelpers.CurrentTimeMillis() % 60_000)));
+			await Task.Delay((int)(60_000 - (TimeHelpers.CurrentTimeMillis() % 60_000)));
 			timer = new System.Timers.Timer(60_000);
 			timer.Elapsed += OnTimer;
 			timer.Enabled = true;
