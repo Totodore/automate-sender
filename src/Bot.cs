@@ -9,6 +9,7 @@ using System.Threading;
 using AutomateSender.DatabaseHandler;
 using System.Runtime.InteropServices;
 using TimeZoneConverter;
+using Serilog;
 
 namespace AutomateSender
 {
@@ -31,16 +32,17 @@ namespace AutomateSender
 		/// </summary>
 		public async Task Init()
 		{
-			Console.WriteLine("Connecting to AutomateBot...");
+			Log.Information("Connecting to AutomateBot...");
 			await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("TOKEN_BOT"));
 			await client.StartAsync();
-			Console.WriteLine("Discord client successfully connected to AutomateBot!");
-			Console.WriteLine("Awaiting new minute before starting...");
-			await Task.Delay((int)(60_000 - (TimeHelpers.CurrentTimeMillis() % 60_000)));
+			Log.Information("Discord client successfully connected to AutomateBot!");
+			Log.Information("Awaiting new minute before starting...");
+			//await Task.Delay((int)(60_000 - (TimeHelpers.CurrentTimeMillis() % 60_000)));
 			timer = new System.Timers.Timer(60_000);
 			timer.Elapsed += OnTimer;
 			timer.Enabled = true;
-			Console.WriteLine("New minute detected, thread started!");
+			Log.Information("New minute detected, thread started!");
+			OnTimer(null, null);
 			await Task.Delay(-1);
 		}
 
@@ -70,7 +72,7 @@ namespace AutomateSender
 				}
 			}
 			ThreadHelpers.WaitForThreads(60);
-			Console.WriteLine("Threadpool ended with " + i + " messages sent");
+			Log.Information("Threadpool ended with " + i + " messages sent");
 		}
 
 		/// <summary>
@@ -87,17 +89,18 @@ namespace AutomateSender
 				var cron = CronExpression.Parse(msg.Cron);
 				var tz = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? TZConvert.IanaToWindows(msg.Guild.Timezone) : msg.Guild.Timezone;
 				var timezone = TimeZoneInfo.FindSystemTimeZoneById(tz);
-				var next = cron.GetNextOccurrence(DateTimeOffset.UtcNow, timezone);
+				var next = cron.GetNextOccurrence(minDate, timezone, true);
+				Log.Verbose($"next: {next}, min: {minDate}, max: {maxDate}");
 				return next >= minDate && next < maxDate;
 			}
 			catch (CronFormatException)
 			{
-				Console.WriteLine("Bad Cron format error, skipping message...");
+				Log.Error("Bad Cron format error, skipping message...");
 				return false;
 			}
 			catch (Exception error)
 			{
-				Console.WriteLine("Cron parsing error (not known), error : " + error);
+				Log.Error("Cron parsing error (not known), error : " + error);
 				return false;
 			}
 		}
@@ -125,9 +128,8 @@ namespace AutomateSender
 					}
 					catch (Exception e)
 					{
-						Console.WriteLine("Crash during file sending for message: " + msg);
-						Console.WriteLine("Error: " + e);
-						continue;
+						Log.Warning("Crash during file sending for message: " + msg);
+						Log.Error("Error: " + e);
 					}
 				}
 				if (channel == null) {
@@ -137,9 +139,8 @@ namespace AutomateSender
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine("Crash during msg sending: " + msg);
-				Console.WriteLine("Error: " + e);
-				return;
+				Log.Warning("Crash during msg sending: " + msg);
+				Log.Error("Error: " + e);
 			}
 		}
 	}

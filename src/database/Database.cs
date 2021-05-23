@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace AutomateSender.DatabaseHandler
 {
@@ -31,7 +32,7 @@ namespace AutomateSender.DatabaseHandler
 
 		public static bool CheckConnection()
 		{
-			Console.WriteLine("Connection String : " + Constants.connectionString);
+			Log.Information("Connection String : " + Constants.connectionString);
 			using var context = new DatabaseContext();
 			return context.Database.Exists();
 		}

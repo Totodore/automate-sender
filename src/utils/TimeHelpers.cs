@@ -9,7 +9,7 @@ namespace AutomateSender
 			return DateTimeOffset.Now.ToUnixTimeMilliseconds();
 		}
 		/// <summary>
-		/// Convert a timestamp to a DateTime
+		/// Convert a timestamp to a UTC DateTime
 		/// </summary>
 		/// <param name="unixTimeStamp">The timestamp to convert</param>
 		/// <returns>The DateTime corresponding to the timestamp given</returns>
@@ -17,7 +17,7 @@ namespace AutomateSender
 		{
 			// Unix timestamp is seconds past epoch
 			DateTime dtDateTime = new(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-			return dtDateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
+			return dtDateTime.AddMilliseconds(unixTimeStamp);
 		}
 	}
 }

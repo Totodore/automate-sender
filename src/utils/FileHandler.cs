@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Serilog;
 
 namespace AutomateSender
 {
@@ -8,7 +9,7 @@ namespace AutomateSender
 		public FileHandler() {
 			baseRoute = Path.Combine(Environment.CurrentDirectory, Environment.GetEnvironmentVariable("IMAGE_ROUTE") ?? "./data");
 			Directory.CreateDirectory(baseRoute);
-			Console.WriteLine("Base File Route: " + baseRoute);
+			Log.Information("Base File Route: " + baseRoute);
 		}
 
 		public FileStream GetFileStream(string id) {

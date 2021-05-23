@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using AutomateSender.DatabaseHandler;
 using dotenv.net;
+using Serilog;
 
 namespace AutomateSender
 {
@@ -10,8 +11,13 @@ namespace AutomateSender
 		private static async Task Main()
 		{
 			DotEnv.Load();
+			var loggerConf =  new LoggerConfiguration();
+			if (Environment.GetEnvironmentVariable("LOG_LEVEL") == "Verbose")
+				loggerConf.MinimumLevel.Verbose();
+			Log.Logger = loggerConf.WriteTo.Console().CreateLogger();
 			ConnectToDatabase();
 			await new Bot().Init();
+			Log.CloseAndFlush();
 		}
 
 		/// <summary>
@@ -28,12 +34,12 @@ namespace AutomateSender
 				if (!DatabaseContext.CheckConnection())
 					throw new Exception();
 				else
-					Console.WriteLine("Successfully connected to database!");
+					Log.Information("Successfully connected to database!");
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine("Could not connect to the database with connectionString '" + Constants.connectionString + "', quitting...");
-				Console.WriteLine(e);
+				Log.Fatal("Could not connect to the database with connectionString '" + Constants.connectionString + "', quitting...");
+				Log.Fatal(e.ToString());
 				Environment.Exit(1);
 			}
 		}
