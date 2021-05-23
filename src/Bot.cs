@@ -69,7 +69,7 @@ namespace AutomateSender
 					i++;
 				}
 			}
-			ThreadHelpers.WaitForThreads(120);
+			ThreadHelpers.WaitForThreads(60);
 			Console.WriteLine("Threadpool ended with " + i + " messages sent");
 		}
 
@@ -88,7 +88,7 @@ namespace AutomateSender
 				var tz = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? TZConvert.IanaToWindows(msg.Guild.Timezone) : msg.Guild.Timezone;
 				var timezone = TimeZoneInfo.FindSystemTimeZoneById(tz);
 				var next = cron.GetNextOccurrence(DateTimeOffset.UtcNow, timezone);
-				return next > minDate && next < maxDate;
+				return next >= minDate && next < maxDate;
 			}
 			catch (CronFormatException)
 			{
