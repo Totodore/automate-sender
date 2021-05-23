@@ -7,6 +7,8 @@ using Discord.WebSocket;
 using System.Linq;
 using System.Threading;
 using AutomateSender.DatabaseHandler;
+using System.Runtime.InteropServices;
+using TimeZoneConverter;
 
 namespace AutomateSender
 {
@@ -67,10 +69,8 @@ namespace AutomateSender
 					i++;
 				}
 			}
-			if (ThreadHelpers.WaitForThreads(120))
-				Console.WriteLine("Threadpool timed out!");
-			else
-				Console.WriteLine("Threadpool ended with " + i + " messages sent");
+			ThreadHelpers.WaitForThreads(120);
+			Console.WriteLine("Threadpool ended with " + i + " messages sent");
 		}
 
 		/// <summary>
@@ -85,9 +85,10 @@ namespace AutomateSender
 			try
 			{
 				var cron = CronExpression.Parse(msg.Cron);
-				var timezone = TimeZoneInfo.FindSystemTimeZoneById(msg.Guild.Timezone);
+				var tz = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? TZConvert.IanaToWindows(msg.Guild.Timezone) : msg.Guild.Timezone;
+				var timezone = TimeZoneInfo.FindSystemTimeZoneById(tz);
 				var next = cron.GetNextOccurrence(DateTimeOffset.UtcNow, timezone);
-				return next > minDate && next <= maxDate;
+				return next > minDate && next < maxDate;
 			}
 			catch (CronFormatException)
 			{

@@ -15,6 +15,7 @@
     <PackageReference Include="EntityFramework" Version="6.4.4" />
     <PackageReference Include="MySql.Data" Version="6.10.9" />
     <PackageReference Include="MySQL.Data.Entities" Version="6.8.3" />
+    <PackageReference Include="TimeZoneConverter" Version="3.5.0" />
   </ItemGroup>
 
 </Project>
