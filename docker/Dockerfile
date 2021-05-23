@@ -15,4 +15,5 @@ COPY --from=build /app/bin/Release/net5.0/* /app
 
 RUN apk update && apk add libstdc++ libgcc tzdata --no-cache
 
-CMD ["dotnet", "automate-sender.dll"]
+# CMD ["dotnet", "automate-sender.dll"]
+CMD ./automate-sender
