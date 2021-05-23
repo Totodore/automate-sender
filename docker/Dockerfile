@@ -11,7 +11,7 @@ FROM mcr.microsoft.com/dotnet/runtime:5.0-alpine
 
 WORKDIR /app
 
-COPY --from=build /app/bin/Release/net5.0/linux-musl-x64/publish/* /app
+COPY --from=build /app/bin/Release/net5.0/linux-musl-x64/publish/* /app/
 
 RUN apk update && apk add libstdc++ libgcc tzdata --no-cache
 
