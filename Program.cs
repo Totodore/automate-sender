@@ -14,7 +14,7 @@ namespace AutomateSender
 			var loggerConf =  new LoggerConfiguration();
 			if (Environment.GetEnvironmentVariable("LOG_LEVEL") == "Verbose")
 				loggerConf.MinimumLevel.Verbose();
-			Log.Logger = loggerConf.WriteTo.Console().CreateLogger();
+			Log.Logger = loggerConf.WriteTo.Console(outputTemplate: "{Timestamp:dd/MM HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}").CreateLogger();
 			ConnectToDatabase();
 			await new Bot().Init();
 			Log.CloseAndFlush();
