@@ -5,11 +5,11 @@ using Cronos;
 using Discord;
 using Discord.WebSocket;
 using System.Linq;
-using System.Threading;
 using AutomateSender.DatabaseHandler;
 using System.Runtime.InteropServices;
 using TimeZoneConverter;
 using Serilog;
+using System.Collections.Generic;
 
 namespace AutomateSender
 {
@@ -38,7 +38,7 @@ namespace AutomateSender
 			Log.Information("Discord client successfully connected to AutomateBot!");
 			Log.Information("Awaiting new minute before starting...");
 			await Task.Delay((int)(60_000 - (TimeHelpers.CurrentTimeMillis() % 60_000)));
-			timer = new System.Timers.Timer(60_000);
+			timer = new Timer(60_000);
 			timer.Elapsed += OnTimer;
 			timer.Enabled = true;
 			Log.Information("New minute detected, thread started!");
@@ -56,23 +56,29 @@ namespace AutomateSender
 		{
 			maxDate = TimeHelpers.TimestampToDateTime(60_000 - (TimeHelpers.CurrentTimeMillis() % 60_000) + TimeHelpers.CurrentTimeMillis());
 			minDate = TimeHelpers.TimestampToDateTime(TimeHelpers.CurrentTimeMillis() - (TimeHelpers.CurrentTimeMillis() % 60_000));
-			var data = await DatabaseContext.GetAllMessages(minDate, maxDate);
-			var i = 0;
+			var data = DatabaseContext.GetAllMessages(minDate, maxDate);
+			var actions = new List<Func<Task<GuildEntity>>>();
+			int messagesTobeSent = 0;
+			int messagesSkipped = 0;
 			foreach (var msg in data)
 			{
-				if (msg.Type == DatabaseHandler.MessageType.FREQUENTIAL && CheckFreqMessage(msg))
+				if (
+					(msg.Type == DatabaseHandler.MessageType.FREQUENTIAL && CheckFreqMessage(msg)) ||
+					msg.Type == DatabaseHandler.MessageType.PONCTUAL
+				)
 				{
-					ThreadPool.QueueUserWorkItem((object _) => SendMessage(msg));
-					i++;
-				}
-				else if (msg.Type == DatabaseHandler.MessageType.PONCTUAL)
-				{
-					ThreadPool.QueueUserWorkItem((object _) => SendMessage(msg));
-					i++;
+					if ((msg.Guild.CurrentQuota?.DailyQuota ?? 0) < msg.Guild.DailyQuota) {
+						actions.Add(() => SendMessage(msg));
+						messagesTobeSent++;
+					} else {
+						Log.Verbose("Skiping this guild (daily quota exceeded)");
+						messagesSkipped++;
+					}
 				}
 			}
-			ThreadHelpers.WaitForThreads(60);
-			Log.Information("Threadpool ended with " + i + " messages sent");
+			var successfulyGuilds = ThreadHelpers.SpawnAndWait(actions, 60_000).Where(el => el != null).ToList();
+			await DatabaseContext.IncrementQuota(successfulyGuilds);
+			Log.Information($"({minDate.Minute.ToString().PadLeft(2, '0')}~{maxDate.Minute.ToString().PadLeft(2, '0')}) Threadpool ended with {successfulyGuilds.Count}/{messagesTobeSent} ({messagesSkipped} messages out of quota) messages sent");
 		}
 
 		/// <summary>
@@ -114,7 +120,7 @@ namespace AutomateSender
 		/// - In case of error the message is completely logged
 		/// </summary>
 		/// <param name="msg">The message object to send</param>
-		public async void SendMessage(MessageEntity msg)
+		public async Task<GuildEntity> SendMessage(MessageEntity msg)
 		{
 			try
 			{
@@ -136,12 +142,14 @@ namespace AutomateSender
 					throw new Exception("No Channel found");
 				}
 				await channel?.SendMessageAsync(msg.ParsedMessage);
+				return msg.Guild;
 			}
 			catch (Exception e)
 			{
 				Log.Warning("Crash during msg sending: " + msg);
 				Log.Error("Error: " + e);
 			}
+			return null;
 		}
 	}
 }
