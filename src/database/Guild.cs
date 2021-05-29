@@ -14,7 +14,8 @@ namespace AutomateSender.DatabaseHandler
 		public string Id { get; set; }
 		public string Timezone { get; set; }
 		public bool Scope { get; set; }
-		public int DailyQuota { get; set; }
+		public bool RemoveOneTimeMessage { get; set; }
+		public int MonthlyQuota { get; set; }
 		public ICollection<MessageEntity> Messages { get; set; }
 		public ICollection<QuotaEntity> Quotas { get; set; }
 

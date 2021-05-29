@@ -53,22 +53,23 @@ namespace AutomateSender.DatabaseHandler
 				if (guild.CurrentQuota?.Id != null)
 					quotaIds.Add(guild.CurrentQuota.Id);
 				else
-					newQuotas.Add(new QuotaEntity { GuildId = guild.Id, DailyQuota = 1 });
+					newQuotas.Add(new QuotaEntity { GuildId = guild.Id, MonthlyQuota = 1 });
 			}
 			if (newQuotas.Count > 0) {
 				await context.BulkInsertAsync(newQuotas);
 			}
 			await context.Quotas.AsQueryable()
 			.Where(el => quotaIds.Contains(el.Id))
-			.UpdateFromQueryAsync(el => new QuotaEntity { DailyQuota = el.DailyQuota + 1 });
+			.UpdateFromQueryAsync(el => new QuotaEntity { MonthlyQuota = el.MonthlyQuota + 1 });
 		}
 
 		public static async Task DisabledOneTimeMessage(List<MessageEntity> messages) {
 			using var context = new DatabaseContext();
 			List<string> messagesIds = messages.ConvertAll(el => el.Id);
 			await context.Messages.AsQueryable()
-			.Where(el => el.TypeEnum == 0 && messagesIds.Contains(el.Id))
+			.Where(el => el.TypeEnum == 0 && messagesIds.Contains(el.Id) && !el.Guild.RemoveOneTimeMessage)
 			.UpdateFromQueryAsync(_ => new MessageEntity { Activated = false });
+			await context.BulkDeleteAsync(messages.Where(el => el.Guild.RemoveOneTimeMessage));
 		}
 
 		/// <summary>

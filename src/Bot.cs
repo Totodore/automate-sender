@@ -64,7 +64,7 @@ namespace AutomateSender
 			{
 				if (msg.Type == DatabaseHandler.MessageType.FREQUENTIAL ? CheckFreqMessage(msg) : CheckPonctualMessage(msg))
 				{
-					if ((msg.Guild.CurrentQuota?.DailyQuota ?? 0) < msg.Guild.DailyQuota) {
+					if ((msg.Guild.CurrentQuota?.MonthlyQuota ?? 0) < msg.Guild.MonthlyQuota) {
 						actions.Add(() => SendMessage(msg));
 						messagesTobeSent++;
 					} else {

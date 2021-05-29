@@ -11,7 +11,7 @@ namespace AutomateSender.DatabaseHandler
 		[Key]
 		public int Id { get; set; }
 		public DateTime Date { get; set; } = TimeHelpers.CurrentMonth;
-		public int DailyQuota { get; set; }
+		public int MonthlyQuota { get; set; }
 		public string GuildId { get; set; }
 		public GuildEntity Guild { get; set; }
 	}
