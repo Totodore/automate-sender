@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace AutomateSender.DatabaseHandler
 {
@@ -27,11 +28,11 @@ namespace AutomateSender.DatabaseHandler
 		/// <param name="minDate">The minimum date for ponctual messages</param>
 		/// <param name="maxDate">The maximum date for frequential messages</param>
 		/// <returns>The list of the queried messages</returns>
-		public static List<MessageEntity> GetAllMessages(DateTime minDate, DateTime maxDate)
+		public static List<MessageEntity> GetAllMessages()
 		{
 			using var context = new DatabaseContext();
 			return context.Messages.AsQueryable()
-			.Where(el => el.Activated && (el.TypeEnum == 1 || (el.TypeEnum == 0 && el.Date > minDate && el.Date < maxDate)))
+			.Where(el => el.Activated)
 			.Include(el => el.Guild)
 			.Include(el => el.Guild.Quotas.Where(quota => quota.Date == TimeHelpers.CurrentMonth))
 			.Include(el => el.Files)
@@ -59,7 +60,15 @@ namespace AutomateSender.DatabaseHandler
 			}
 			await context.Quotas.AsQueryable()
 			.Where(el => quotaIds.Contains(el.Id))
-			.UpdateFromQueryAsync(el => new QuotaEntity() { DailyQuota = el.DailyQuota + 1 });
+			.UpdateFromQueryAsync(el => new QuotaEntity { DailyQuota = el.DailyQuota + 1 });
+		}
+
+		public static async Task DisabledOneTimeMessage(List<MessageEntity> messages) {
+			using var context = new DatabaseContext();
+			List<string> messagesIds = messages.ConvertAll(el => el.Id);
+			await context.Messages.AsQueryable()
+			.Where(el => el.TypeEnum == 0 && messagesIds.Contains(el.Id))
+			.UpdateFromQueryAsync(_ => new MessageEntity { Activated = false });
 		}
 
 		/// <summary>

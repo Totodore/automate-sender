@@ -56,16 +56,13 @@ namespace AutomateSender
 		{
 			maxDate = TimeHelpers.TimestampToDateTime(60_000 - (TimeHelpers.CurrentTimeMillis() % 60_000) + TimeHelpers.CurrentTimeMillis());
 			minDate = TimeHelpers.TimestampToDateTime(TimeHelpers.CurrentTimeMillis() - (TimeHelpers.CurrentTimeMillis() % 60_000));
-			var data = DatabaseContext.GetAllMessages(minDate, maxDate);
+			var data = DatabaseContext.GetAllMessages();
 			var actions = new List<Func<Task<GuildEntity>>>();
 			int messagesTobeSent = 0;
 			int messagesSkipped = 0;
 			foreach (var msg in data)
 			{
-				if (
-					(msg.Type == DatabaseHandler.MessageType.FREQUENTIAL && CheckFreqMessage(msg)) ||
-					msg.Type == DatabaseHandler.MessageType.PONCTUAL
-				)
+				if (msg.Type == DatabaseHandler.MessageType.FREQUENTIAL ? CheckFreqMessage(msg) : CheckPonctualMessage(msg))
 				{
 					if ((msg.Guild.CurrentQuota?.DailyQuota ?? 0) < msg.Guild.DailyQuota) {
 						actions.Add(() => SendMessage(msg));
@@ -78,7 +75,8 @@ namespace AutomateSender
 			}
 			var successfulyGuilds = ThreadHelpers.SpawnAndWait(actions, 60_000).Where(el => el != null).ToList();
 			await DatabaseContext.IncrementQuota(successfulyGuilds);
-			Log.Information($"({minDate.Minute.ToString().PadLeft(2, '0')}~{maxDate.Minute.ToString().PadLeft(2, '0')}) Threadpool ended with {successfulyGuilds.Count}/{messagesTobeSent} ({messagesSkipped} messages out of quota) messages sent");
+			await DatabaseContext.DisabledOneTimeMessage(data);
+			Log.Information($"[{minDate}] Threadpool ended with {successfulyGuilds.Count}/{messagesTobeSent} ({messagesSkipped} messages out of quota) messages sent");
 		}
 
 		/// <summary>
@@ -107,6 +105,19 @@ namespace AutomateSender
 			catch (Exception error)
 			{
 				Log.Error("Cron parsing error (not known), error : " + error);
+				return false;
+			}
+		}
+
+		public bool CheckPonctualMessage(MessageEntity msg) {
+			var tz = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? TZConvert.IanaToWindows(msg.Guild.Timezone) : msg.Guild.Timezone;
+			try {
+				var timezone = TimeZoneInfo.FindSystemTimeZoneById(tz);
+				var utcDate = TimeZoneInfo.ConvertTimeToUtc(msg.Date, timezone);
+				Log.Verbose($"curr: {utcDate}, min: {minDate}, max: {maxDate}");
+				return utcDate >= minDate && utcDate < maxDate;
+			} catch (Exception error) {
+				Log.Error("Date parsing error :" + error);
 				return false;
 			}
 		}
