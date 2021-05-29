@@ -12,12 +12,14 @@
     <PackageReference Include="Cronos" Version="0.7.0" />
     <PackageReference Include="Discord.Net" Version="2.3.1" />
     <PackageReference Include="dotenv.net" Version="3.0.0" />
-    <PackageReference Include="EntityFramework" Version="6.4.4" />
-    <PackageReference Include="MySql.Data" Version="6.10.9" />
-    <PackageReference Include="MySQL.Data.Entities" Version="6.8.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.6" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="5.0.0" />
     <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="TimeZoneConverter" Version="3.5.0" />
+    <PackageReference Include="Z.EntityFramework.Extensions.EFCore" Version="5.1.37" />
   </ItemGroup>
 
 </Project>

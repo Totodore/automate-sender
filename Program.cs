@@ -15,7 +15,7 @@ namespace AutomateSender
 			if (Environment.GetEnvironmentVariable("LOG_LEVEL") == "Verbose")
 				loggerConf.MinimumLevel.Verbose();
 			Log.Logger = loggerConf.WriteTo.Console(outputTemplate: "{Timestamp:dd/MM HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}").CreateLogger();
-			ConnectToDatabase();
+			await ConnectToDatabase();
 			await new Bot().Init();
 			Log.CloseAndFlush();
 		}
@@ -25,13 +25,13 @@ namespace AutomateSender
 		/// - Build the database connection from the environment variables
 		/// - Check the connection
 		/// </summary>
-		private static void ConnectToDatabase()
+		private async static Task ConnectToDatabase()
 		{
 			try
 			{
 				var env = Environment.GetEnvironmentVariables();
 				Constants.connectionString = $"Server={env["DB_HOST"]};Port={env["DB_PORT"]};Database={env["DB_NAME"]};Uid={env["DB_USER"]};Pwd={env["DB_PASS"]};";
-				if (!DatabaseContext.CheckConnection())
+				if (!await DatabaseContext.CheckConnection())
 					throw new Exception();
 				else
 					Log.Information("Successfully connected to database!");
