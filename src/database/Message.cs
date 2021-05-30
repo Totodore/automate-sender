@@ -14,7 +14,7 @@ namespace AutomateSender.DatabaseHandler
 		public string Id { get; set; }
 		public string ChannelId { get; set; }
 		public string Cron { get; set; }
-		public DateTime Date { get; set; }
+		public DateTime? Date { get; set; }
 		public string ParsedMessage { get; set; }
 		public string Message { get; set; }
 		public string Description { get; set; }

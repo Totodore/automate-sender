@@ -113,7 +113,7 @@ namespace AutomateSender
 			var tz = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? TZConvert.IanaToWindows(msg.Guild.Timezone) : msg.Guild.Timezone;
 			try {
 				var timezone = TimeZoneInfo.FindSystemTimeZoneById(tz);
-				var utcDate = TimeZoneInfo.ConvertTimeToUtc(msg.Date, timezone);
+				var utcDate = TimeZoneInfo.ConvertTimeToUtc((DateTime)msg.Date, timezone);
 				Log.Verbose($"curr: {utcDate}, min: {minDate}, max: {maxDate}");
 				return utcDate >= minDate && utcDate < maxDate;
 			} catch (Exception error) {
