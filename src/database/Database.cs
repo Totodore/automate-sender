@@ -25,8 +25,6 @@ namespace AutomateSender.DatabaseHandler
 		/// Get all the messages with linked guild, current quota and files
 		/// filter if it is a date and that it is not in the datespan given in argument
 		/// </summary>
-		/// <param name="minDate">The minimum date for ponctual messages</param>
-		/// <param name="maxDate">The maximum date for frequential messages</param>
 		/// <returns>The list of the queried messages</returns>
 		public static List<MessageEntity> GetAllMessages()
 		{
