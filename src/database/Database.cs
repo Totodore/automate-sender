@@ -30,7 +30,7 @@ namespace AutomateSender.DatabaseHandler
 		{
 			using var context = new DatabaseContext();
 			return context.Messages.AsQueryable()
-			.Where(el => el.Activated && el.Guild.Timezone != null)
+			.Where(el => el.Activated && el.Guild.Timezone != null && el.Guild.DeletedDate == null)
 			.Include(el => el.Guild)
 			.Include(el => el.Guild.Quotas.Where(quota => quota.Date == TimeHelpers.CurrentMonth))
 			.Include(el => el.Files)
@@ -65,7 +65,7 @@ namespace AutomateSender.DatabaseHandler
 			using var context = new DatabaseContext();
 			List<string> messagesIds = messages.ConvertAll(el => el.Id);
 			await context.Messages.AsQueryable()
-			.Where(el => el.TypeEnum == 0 && messagesIds.Contains(el.Id) && !el.Guild.RemoveOneTimeMessage)
+			.Where(el => el.TypeEnum == 0 && messagesIds.Contains(el.Id) && !el.Guild.RemoveOneTimeMessage && el.Guild.DeletedDate == null)
 			.UpdateFromQueryAsync(_ => new MessageEntity { Activated = false });
 			await context.BulkDeleteAsync(messages.Where(el => el.Guild.RemoveOneTimeMessage));
 		}
