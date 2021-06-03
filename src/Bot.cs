@@ -57,7 +57,7 @@ namespace AutomateSender
 			maxDate = TimeHelpers.TimestampToDateTime(60_000 - (TimeHelpers.CurrentTimeMillis() % 60_000) + TimeHelpers.CurrentTimeMillis());
 			minDate = TimeHelpers.TimestampToDateTime(TimeHelpers.CurrentTimeMillis() - (TimeHelpers.CurrentTimeMillis() % 60_000));
 			var data = DatabaseContext.GetAllMessages();
-			var actions = new List<Func<Task<GuildEntity>>>();
+			var actions = new List<Func<Task<MessageEntity>>>();
 			int messagesTobeSent = 0;
 			int messagesSkipped = 0;
 			foreach (var msg in data)
@@ -73,10 +73,10 @@ namespace AutomateSender
 					}
 				}
 			}
-			var successfulyGuilds = ThreadHelpers.SpawnAndWait(actions, 60_000).Where(el => el != null).ToList();
-			await DatabaseContext.IncrementQuota(successfulyGuilds);
-			await DatabaseContext.DisabledOneTimeMessage(data);
-			Log.Information($"[{minDate}] Threadpool ended with {successfulyGuilds.Count}/{messagesTobeSent} ({messagesSkipped} messages out of quota) messages sent");
+			var successfulMessages = ThreadHelpers.SpawnAndWait(actions, 60_000).Where(el => el != null).ToList();
+			await DatabaseContext.IncrementQuota(successfulMessages.ConvertAll(el => el.Guild));
+			await DatabaseContext.DisabledOneTimeMessage(successfulMessages.Where(el => el.TypeEnum == 0).ToList());
+			Log.Information($"[{minDate}] Threadpool ended with {successfulMessages.Count}/{messagesTobeSent} ({messagesSkipped} messages out of quota) messages sent");
 		}
 
 		/// <summary>
@@ -131,7 +131,7 @@ namespace AutomateSender
 		/// - In case of error the message is completely logged
 		/// </summary>
 		/// <param name="msg">The message object to send</param>
-		public async Task<GuildEntity> SendMessage(MessageEntity msg)
+		public async Task<MessageEntity> SendMessage(MessageEntity msg)
 		{
 			try
 			{
@@ -153,7 +153,7 @@ namespace AutomateSender
 					throw new Exception("No Channel found");
 				}
 				await channel?.SendMessageAsync(msg.ParsedMessage);
-				return msg.Guild;
+				return msg;
 			}
 			catch (Exception e)
 			{
