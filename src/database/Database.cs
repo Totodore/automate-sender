@@ -68,7 +68,7 @@ namespace AutomateSender.DatabaseHandler
 			.Where(el => messagesIds.Contains(el.Id) && !el.Guild.RemoveOneTimeMessage && el.Guild.DeletedDate == null)
 			.UpdateFromQueryAsync(_ => new MessageEntity { Activated = false });
 			var msgToDelete = messages.Where(el => el.Guild.RemoveOneTimeMessage && el.Guild.DeletedDate == null);
-			var filesToDelete = msgToDelete.SelectMany(el => el.Files);
+			var filesToDelete = msgToDelete.SelectMany(el => el.Files ?? new List<FileEntity>()) ?? new List<FileEntity>();
 			await context.BulkDeleteAsync(filesToDelete);
 			await context.BulkDeleteAsync(msgToDelete);
 			var fileHandler = new FileHandler();
