@@ -14,6 +14,10 @@ namespace AutomateSender
 
 		public FileStream GetFileStream(string id) {
 			return File.OpenRead(Path.Combine(baseRoute, id));
-		} 
+		}
+
+		public void DeleteFile(string id) {
+			File.Delete(Path.Combine(baseRoute, id));
+		}
 	}
 }
