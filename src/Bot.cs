@@ -74,8 +74,15 @@ namespace AutomateSender
 				}
 			}
 			var successfulMessages = ThreadHelpers.SpawnAndWait(actions, 60_000).Where(el => el != null).ToList();
-			await DatabaseContext.IncrementQuota(successfulMessages.ConvertAll(el => el.Guild));
-			await DatabaseContext.DisabledOneTimeMessage(successfulMessages.Where(el => el.TypeEnum == 0).ToList());
+			var guildMsg = new Dictionary<GuildEntity, int>();
+			foreach(MessageEntity msg in successfulMessages) {
+				if (guildMsg.ContainsKey(msg.Guild))
+					guildMsg[msg.Guild]++;
+				else
+					guildMsg.Add(msg.Guild, 1);
+			}
+			await DatabaseContext.IncrementQuota(guildMsg);
+			await DatabaseContext.DisabledOneTimeMessage(successfulMessages.Where(el => el.TypeEnum == 0).ToList(), fileHandler);
 			Log.Information($"[{minDate}] Threadpool ended with {successfulMessages.Count}/{messagesTobeSent} ({messagesSkipped} messages out of quota) messages sent");
 		}
 

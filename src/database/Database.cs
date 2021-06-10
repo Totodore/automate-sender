@@ -40,28 +40,30 @@ namespace AutomateSender.DatabaseHandler
 		/// <summary>
 		/// Increment or create all the quota per month for the guilds
 		/// </summary>
-		/// <param name="guilds">The list of the guilds in which to increment or create the quota</param>
+		/// <param name="sentMessages">A dictionnary container the number of sent messages per guilds</param>
 		/// <returns>A async task</returns>
-		public static async Task IncrementQuota(List<GuildEntity> guilds) {
+		public static async Task IncrementQuota(Dictionary<GuildEntity, int> sentMessages) {
 			using var context = new DatabaseContext();
-			List<int> quotaIds = new();
+			Dictionary<int, int> quotaIds = new();
 			List<QuotaEntity> newQuotas = new();
-			foreach (var guild in guilds)
+			foreach (var guild in sentMessages.Keys)
 			{
 				if (guild.CurrentQuota?.Id != null)
-					quotaIds.Add(guild.CurrentQuota.Id);
+					quotaIds.Add(guild.CurrentQuota.Id, sentMessages[guild]);
 				else
-					newQuotas.Add(new QuotaEntity { GuildId = guild.Id, MonthlyQuota = 1 });
+					newQuotas.Add(new QuotaEntity { GuildId = guild.Id, MonthlyQuota = sentMessages[guild] });
 			}
 			if (newQuotas.Count > 0) {
 				await context.BulkInsertAsync(newQuotas);
 			}
-			await context.Quotas.AsQueryable()
-			.Where(el => quotaIds.Contains(el.Id))
-			.UpdateFromQueryAsync(el => new QuotaEntity { MonthlyQuota = el.MonthlyQuota + 1 });
+			var quotas = await context.Quotas.AsQueryable().Where(el => quotaIds.Keys.Contains(el.Id)).ToListAsync();
+			foreach (var quota in quotas) {
+				quota.MonthlyQuota += quotaIds.First(el => el.Key == quota.Id).Value;
+			}
+			await context.BulkUpdateAsync(quotas);
 		}
 
-		public static async Task DisabledOneTimeMessage(List<MessageEntity> messages) {
+		public static async Task DisabledOneTimeMessage(List<MessageEntity> messages, FileHandler fileHandler) {
 			using var context = new DatabaseContext();
 			List<string> messagesIds = messages.ConvertAll(el => el.Id);
 			await context.Messages.AsQueryable()
@@ -71,7 +73,6 @@ namespace AutomateSender.DatabaseHandler
 			var filesToDelete = msgToDelete.SelectMany(el => el.Files ?? new List<FileEntity>()) ?? new List<FileEntity>();
 			await context.BulkDeleteAsync(filesToDelete);
 			await context.BulkDeleteAsync(msgToDelete);
-			var fileHandler = new FileHandler();
 			foreach (FileEntity file in filesToDelete) {
 				try {
 					fileHandler.DeleteFile(file.Id);
