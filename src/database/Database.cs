@@ -49,7 +49,7 @@ namespace AutomateSender.DatabaseHandler
 			foreach (var guild in sentMessages.Keys)
 			{
 				if (guild.CurrentQuota?.Id != null)
-					quotaIds.Add(guild.CurrentQuota.Id, sentMessages[guild]);
+					quotaIds.Add(guild.CurrentQuota.Id, guild.MonthlyQuota - guild.CurrentQuota.MonthlyQuota > 0 ? sentMessages[guild] : guild.MonthlyQuota);
 				else
 					newQuotas.Add(new QuotaEntity { GuildId = guild.Id, MonthlyQuota = sentMessages[guild] });
 			}
