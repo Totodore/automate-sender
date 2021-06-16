@@ -63,6 +63,13 @@ namespace AutomateSender.DatabaseHandler
 			await context.BulkUpdateAsync(quotas);
 		}
 
+		public static async Task DisableErroredMessages(List<MessageEntity> messages) {
+			using var context = new DatabaseContext();
+			foreach (var msg in messages)
+				msg.Activated = false;
+			await context.BulkUpdateAsync(messages);
+		}
+
 		public static async Task DisabledOneTimeMessage(List<MessageEntity> messages, FileHandler fileHandler) {
 			using var context = new DatabaseContext();
 			List<string> messagesIds = messages.ConvertAll(el => el.Id);

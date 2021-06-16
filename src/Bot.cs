@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using TimeZoneConverter;
 using Serilog;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace AutomateSender
 {
@@ -19,6 +20,8 @@ namespace AutomateSender
 
 		private DateTime minDate;
 		private DateTime maxDate;
+
+		private List<MessageEntity> cronErroredMessages = new();
 
 		private readonly FileHandler fileHandler = new();
 
@@ -83,7 +86,9 @@ namespace AutomateSender
 			}
 			await DatabaseContext.IncrementQuota(guildMsg);
 			await DatabaseContext.DisabledOneTimeMessage(successfulMessages.Where(el => el.TypeEnum == 0).ToList(), fileHandler);
+			await DatabaseContext.DisableErroredMessages(cronErroredMessages);
 			Log.Information($"[{minDate}] Threadpool ended with {successfulMessages.Count}/{messagesTobeSent} ({messagesSkipped} messages out of quota) messages sent");
+			cronErroredMessages = new List<MessageEntity>();
 		}
 
 		/// <summary>
@@ -106,7 +111,8 @@ namespace AutomateSender
 			}
 			catch (CronFormatException)
 			{
-				Log.Error("Bad Cron format error, skipping message...");
+				Log.Verbose("Bad Cron format error, skipping and disabling message...");
+				cronErroredMessages.Add(msg);
 				return false;
 			}
 			catch (Exception error)
