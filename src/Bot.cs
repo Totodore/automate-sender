@@ -172,6 +172,8 @@ namespace AutomateSender
 			{
 				Log.Warning("Crash during msg sending: " + msg);
 				Log.Error("Error: " + e);
+				cronErroredMessages.add(msg);
+				return null;
 			}
 			return null;
 		}
