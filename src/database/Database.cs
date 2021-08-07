@@ -59,7 +59,7 @@ namespace AutomateSender.DatabaseHandler
 			var quotas = await context.Quotas.AsQueryable()
 				.Where(el => quotaIds.Keys.Contains(el.Id))
 				.UpdateAsync(el => new QuotaEntity { 
-					MonthlyQuota = el.MonthlyQuota + quotaIds.First(el2 => el2.Key == el.Id).Value 
+					MonthlyQuota = el.MonthlyQuota + quotaIds[el.Id] 
 				});
 		}
 
