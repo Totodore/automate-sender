@@ -53,18 +53,21 @@ namespace AutomateSender.DatabaseHandler
 					newQuotas.Add(new QuotaEntity { GuildId = guild.Id, MonthlyQuota = sentMessages[guild] });
 			}
 			if (newQuotas.Count > 0) {
-				await context.Quotas.AddRangeAsync(newQuotas);
+				context.Quotas.AddRange(newQuotas);
 				await context.SaveChangesAsync();
 			}
 			foreach (var quota in context.Quotas.AsQueryable().Where(el => quotaIds.Keys.Contains(el.Id))) {
-				if (quotaIds.ContainsKey(quota.Id))
-					quota.MonthlyQuota += quotaIds[quota.Id];
+				quota.MonthlyQuota += quotaIds[quota.Id];
 			}
 			await context.SaveChangesAsync();
 		}
 
 		public static async Task DisableErroredMessages(List<MessageEntity> messages) {
-			await messages.AsQueryable().UpdateAsync(msg => new MessageEntity { Activated = false });
+			using var context = new DatabaseContext();
+			var msgIds = messages.Select(msg => msg.Id);
+			await context.Messages.AsQueryable()
+				.Where(msg => msgIds.Contains(msg.Id))
+				.UpdateAsync(msg => new MessageEntity { Activated = false });
 		}
 
 		public static async Task DisabledOneTimeMessage(List<MessageEntity> messages, FileHandler fileHandler) {
