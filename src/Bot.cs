@@ -175,7 +175,6 @@ namespace AutomateSender
 				cronErroredMessages.Add(msg);
 				return null;
 			}
-			return null;
 		}
 	}
 }

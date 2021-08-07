@@ -1,11 +1,10 @@
-using System.Threading;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using Z.EntityFramework.Plus;
 
 namespace AutomateSender.DatabaseHandler
 {
@@ -54,20 +53,18 @@ namespace AutomateSender.DatabaseHandler
 					newQuotas.Add(new QuotaEntity { GuildId = guild.Id, MonthlyQuota = sentMessages[guild] });
 			}
 			if (newQuotas.Count > 0) {
-				await context.BulkInsertAsync(newQuotas);
+				await context.Quotas.AddRangeAsync(newQuotas);
+				await context.SaveChangesAsync();
 			}
-			var quotas = await context.Quotas.AsQueryable().Where(el => quotaIds.Keys.Contains(el.Id)).ToListAsync();
-			foreach (var quota in quotas) {
-				quota.MonthlyQuota += quotaIds.First(el => el.Key == quota.Id).Value;
-			}
-			await context.BulkUpdateAsync(quotas);
+			var quotas = await context.Quotas.AsQueryable()
+				.Where(el => quotaIds.Keys.Contains(el.Id))
+				.UpdateAsync(el => new QuotaEntity { 
+					MonthlyQuota = el.MonthlyQuota + quotaIds.First(el2 => el2.Key == el.Id).Value 
+				});
 		}
 
 		public static async Task DisableErroredMessages(List<MessageEntity> messages) {
-			using var context = new DatabaseContext();
-			foreach (var msg in messages)
-				msg.Activated = false;
-			await context.BulkUpdateAsync(messages);
+			await messages.AsQueryable().UpdateAsync(msg => new MessageEntity { Activated = false });
 		}
 
 		public static async Task DisabledOneTimeMessage(List<MessageEntity> messages, FileHandler fileHandler) {
@@ -77,14 +74,15 @@ namespace AutomateSender.DatabaseHandler
 			.Where(el => messagesIds.Contains(el.Id) && !el.Guild.RemoveOneTimeMessage && el.Guild.DeletedDate == null)
 			.UpdateFromQueryAsync(_ => new MessageEntity { Activated = false });
 			var msgToDelete = messages.Where(el => el.Guild.RemoveOneTimeMessage && el.Guild.DeletedDate == null);
-			var filesToDelete = msgToDelete.SelectMany(el => el.Files ?? new List<FileEntity>()) ?? new List<FileEntity>();
-			await context.BulkDeleteAsync(filesToDelete);
-			await context.BulkDeleteAsync(msgToDelete);
-			foreach (FileEntity file in filesToDelete) {
+			var filesToDeleteIds = msgToDelete.SelectMany(el => el.Files ?? new List<FileEntity>()).Select(el => el.Id) ?? new List<string>();
+			var msgToDeleteIds = msgToDelete.Select(el => el.Id);
+			context.Files.AsQueryable().Where(el => filesToDeleteIds.Contains(el.Id));
+			context.Messages.AsQueryable().Where(el => msgToDeleteIds.Contains(el.Id));
+			foreach (string fileId in filesToDeleteIds) {
 				try {
-					fileHandler.DeleteFile(file.Id);
+					fileHandler.DeleteFile(fileId);
 				} catch(Exception err) {
-					Log.Error($"Could not delete file {file.Id} err: {err}");
+					Log.Error($"Could not delete file {fileId} err: {err}");
 				}
 			}
 		}
