@@ -56,11 +56,11 @@ namespace AutomateSender.DatabaseHandler
 				await context.Quotas.AddRangeAsync(newQuotas);
 				await context.SaveChangesAsync();
 			}
-			var quotas = await context.Quotas.AsQueryable()
-				.Where(el => quotaIds.Keys.Contains(el.Id))
-				.UpdateAsync(el => new QuotaEntity { 
-					MonthlyQuota = el.MonthlyQuota + quotaIds[el.Id] 
-				});
+			foreach (var quota in context.Quotas.AsQueryable().Where(el => quotaIds.Keys.Contains(el.Id))) {
+				if (quotaIds.ContainsKey(quota.Id))
+					quota.MonthlyQuota += quotaIds[quota.Id];
+			}
+			await context.SaveChangesAsync();
 		}
 
 		public static async Task DisableErroredMessages(List<MessageEntity> messages) {
