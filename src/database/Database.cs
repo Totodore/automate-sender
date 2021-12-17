@@ -67,7 +67,7 @@ namespace AutomateSender.DatabaseHandler
 			var msgIds = messages.Select(msg => msg.Id);
 			await context.Messages.AsQueryable()
 				.Where(msg => msgIds.Contains(msg.Id))
-				.UpdateAsync(msg => new MessageEntity { Activated = false });
+				.UpdateAsync(_ => new MessageEntity { Activated = false });
 		}
 
 		public static async Task DisabledOneTimeMessage(List<MessageEntity> messages, FileHandler fileHandler) {
