@@ -4,6 +4,7 @@ using System.Timers;
 using Cronos;
 using Discord;
 using Discord.WebSocket;
+using Discord.Webhook;
 using System.Linq;
 using AutomateSender.DatabaseHandler;
 using System.Runtime.InteropServices;
@@ -54,6 +55,7 @@ namespace AutomateSender
 		/// - Get the date with the current minute but without any seconds
 		/// - Get all the messages to send (all freq and current ponctual)
 		/// - foreach message it checks if it has to be sended and then add it to the thread pool
+		/// - Once the messages sent we build a map with the messages sent through channels for each guild
 		/// </summary>
 		private async void OnTimer(object source, ElapsedEventArgs e)
 		{
@@ -67,7 +69,7 @@ namespace AutomateSender
 			{
 				if (msg.Type == DatabaseHandler.MessageType.FREQUENTIAL ? CheckFreqMessage(msg) : CheckPonctualMessage(msg))
 				{
-					if ((msg.Guild.CurrentQuota?.MonthlyQuota ?? 0) < msg.Guild.MonthlyQuota) {
+					if ((msg.Guild.CurrentQuota?.MonthlyQuota ?? 0) < msg.Guild.MonthlyQuota || msg.Webhook != null) {
 						actions.Add(() => SendMessage(msg));
 						messagesTobeSent++;
 					} else {
@@ -79,9 +81,9 @@ namespace AutomateSender
 			var successfulMessages = ThreadHelpers.SpawnAndWait(actions, 60_000).Where(el => el != null).ToList();
 			var guildMsg = new Dictionary<GuildEntity, int>();
 			foreach(MessageEntity msg in successfulMessages) {
-				if (guildMsg.ContainsKey(msg.Guild))
+				if (guildMsg.ContainsKey(msg.Guild) && msg.Webhook == null)
 					guildMsg[msg.Guild]++;
-				else
+				else if (msg.Webhook == null)
 					guildMsg.Add(msg.Guild, 1);
 			}
 			await DatabaseContext.IncrementQuota(guildMsg);
@@ -148,13 +150,17 @@ namespace AutomateSender
 		{
 			try
 			{
+				using var webhook = msg.Webhook != null ? new DiscordWebhookClient(msg.Webhook.Url) : null;
 				var channel = client.GetChannel(ulong.Parse(msg.ChannelId)) as IMessageChannel;
 				var files = msg.Files.ToList();
 				for (int i = 0; i < (msg.Files?.Count ?? 0); i++)
 				{
 					try
 					{
-						await channel.SendFileAsync(fileHandler.GetFileStream(files[i].Id), $"attachment-{i}");
+						if (webhook != null)
+							await webhook.SendFileAsync(fileHandler.GetFileStream(files[i].Id), $"attachment-{i}", "");
+						else
+							await channel.SendFileAsync(fileHandler.GetFileStream(files[i].Id), $"attachment-{i}");
 					}
 					catch (Exception e)
 					{
@@ -162,10 +168,13 @@ namespace AutomateSender
 						Log.Error("Error: " + e);
 					}
 				}
-				if (channel == null) {
-					throw new Exception("No Channel found");
+				if (channel == null && webhook == null) {
+					throw new Exception("No Channel or webhook found");
 				}
-				await channel?.SendMessageAsync(msg.ParsedMessage);
+				if (webhook != null)
+					await webhook.SendMessageAsync(msg.ParsedMessage);
+				else
+					await channel?.SendMessageAsync(msg.ParsedMessage);
 				return msg;
 			}
 			catch (Exception e)

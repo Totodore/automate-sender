@@ -14,6 +14,7 @@ namespace AutomateSender.DatabaseHandler
 		public DbSet<GuildEntity> Guilds { get; set; }
 		public DbSet<MessageEntity> Messages { get; set; }
 		public DbSet<QuotaEntity> Quotas { get; set; }
+		public DbSet<WebhookEntity> Webhooks { get; set; }
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
@@ -33,6 +34,7 @@ namespace AutomateSender.DatabaseHandler
 			.Include(el => el.Guild)
 			.Include(el => el.Guild.Quotas.Where(quota => quota.Date == TimeHelpers.CurrentMonth))
 			.Include(el => el.Files)
+			.Include(el => el.Webhook)
 			.ToList() ?? new List<MessageEntity>();
 		}
 
