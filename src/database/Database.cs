@@ -29,7 +29,7 @@ namespace AutomateSender.DatabaseHandler
 		{
 			using var context = new DatabaseContext();
 			return context.Messages.AsQueryable()
-			.Where(el => el.Activated && (el.Date != null || el.TypeEnum == 1) && (el.Cron != null || el.TypeEnum == 0) && el.Guild.Timezone != null && el.Guild.DeletedDate == null)
+			.Where(el => el.Activated && (el.Date != null || el.Cron != null) && el.Guild.Timezone != null && el.Guild.DeletedDate == null)
 			.Include(el => el.Guild)
 			.Include(el => el.Guild.Quotas.Where(quota => quota.Date == TimeHelpers.CurrentMonth))
 			.Include(el => el.Files)
