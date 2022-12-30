@@ -1,16 +1,16 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Timers;
+using AutomateSender.DatabaseHandler;
 using Cronos;
 using Discord;
 using Discord.WebSocket;
-using System.Linq;
-using AutomateSender.DatabaseHandler;
-using System.Runtime.InteropServices;
-using TimeZoneConverter;
-using Serilog;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Query.Internal;
+using Serilog;
+using TimeZoneConverter;
 
 namespace AutomateSender
 {
@@ -67,10 +67,13 @@ namespace AutomateSender
 			{
 				if (msg.Type == DatabaseHandler.MessageType.FREQUENTIAL ? CheckFreqMessage(msg) : CheckPonctualMessage(msg))
 				{
-					if ((msg.Guild.CurrentQuota?.MonthlyQuota ?? 0) < msg.Guild.MonthlyQuota) {
+					if ((msg.Guild.CurrentQuota?.MonthlyQuota ?? 0) < msg.Guild.MonthlyQuota)
+					{
 						actions.Add(() => SendMessage(msg));
 						messagesTobeSent++;
-					} else {
+					}
+					else
+					{
 						Log.Verbose("Skiping this guild (daily quota exceeded)");
 						messagesSkipped++;
 					}
@@ -78,7 +81,8 @@ namespace AutomateSender
 			}
 			var successfulMessages = ThreadHelpers.SpawnAndWait(actions, 60_000).Where(el => el != null).ToList();
 			var guildMsg = new Dictionary<GuildEntity, int>();
-			foreach(MessageEntity msg in successfulMessages) {
+			foreach (MessageEntity msg in successfulMessages)
+			{
 				if (guildMsg.ContainsKey(msg.Guild))
 					guildMsg[msg.Guild]++;
 				else
@@ -122,14 +126,18 @@ namespace AutomateSender
 			}
 		}
 
-		public bool CheckPonctualMessage(MessageEntity msg) {
+		public bool CheckPonctualMessage(MessageEntity msg)
+		{
 			var tz = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? TZConvert.IanaToWindows(msg.Guild.Timezone) : msg.Guild.Timezone;
-			try {
+			try
+			{
 				var timezone = TimeZoneInfo.FindSystemTimeZoneById(tz);
 				var utcDate = TimeZoneInfo.ConvertTimeToUtc((DateTime)msg.Date, timezone);
 				Log.Verbose($"curr: {utcDate}, min: {minDate}, max: {maxDate}");
 				return utcDate >= minDate && utcDate < maxDate;
-			} catch (Exception error) {
+			}
+			catch (Exception error)
+			{
 				Log.Error("Date parsing error :" + error);
 				return false;
 			}
@@ -148,13 +156,21 @@ namespace AutomateSender
 		{
 			try
 			{
-				var channel = client.GetChannel(ulong.Parse(msg.ChannelId)) as IMessageChannel;
+				if (client.GetChannel(ulong.Parse(msg.ChannelId)) is not IMessageChannel channel)
+				{
+					throw new Exception("No Channel found");
+				}
+				var sentMsg = await channel?.SendMessageAsync(msg.ParsedMessage);
 				var files = msg.Files.ToList();
 				for (int i = 0; i < (msg.Files?.Count ?? 0); i++)
 				{
 					try
 					{
-						await channel.SendFileAsync(fileHandler.GetFileStream(files[i].Id), $"attachment-{i}");
+						await channel.SendFileAsync(
+							fileHandler.GetFileStream(files[i].Id),
+							filename: files[i].Name,
+							messageReference: sentMsg.Reference
+						);
 					}
 					catch (Exception e)
 					{
@@ -162,10 +178,6 @@ namespace AutomateSender
 						Log.Error("Error: " + e);
 					}
 				}
-				if (channel == null) {
-					throw new Exception("No Channel found");
-				}
-				await channel?.SendMessageAsync(msg.ParsedMessage);
 				return msg;
 			}
 			catch (Exception e)

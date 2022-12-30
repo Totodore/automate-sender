@@ -41,7 +41,8 @@ namespace AutomateSender.DatabaseHandler
 		/// </summary>
 		/// <param name="sentMessages">A dictionnary container the number of sent messages per guilds</param>
 		/// <returns>A async task</returns>
-		public static async Task IncrementQuota(Dictionary<GuildEntity, int> sentMessages) {
+		public static async Task IncrementQuota(Dictionary<GuildEntity, int> sentMessages)
+		{
 			using var context = new DatabaseContext();
 			Dictionary<int, int> quotaIds = new();
 			List<QuotaEntity> newQuotas = new();
@@ -52,17 +53,20 @@ namespace AutomateSender.DatabaseHandler
 				else
 					newQuotas.Add(new QuotaEntity { GuildId = guild.Id, MonthlyQuota = sentMessages[guild] });
 			}
-			if (newQuotas.Count > 0) {
+			if (newQuotas.Count > 0)
+			{
 				context.Quotas.AddRange(newQuotas);
 				await context.SaveChangesAsync();
 			}
-			foreach (var quota in context.Quotas.AsQueryable().Where(el => quotaIds.Keys.Contains(el.Id))) {
+			foreach (var quota in context.Quotas.AsQueryable().Where(el => quotaIds.Keys.Contains(el.Id)))
+			{
 				quota.MonthlyQuota += quotaIds[quota.Id];
 			}
 			await context.SaveChangesAsync();
 		}
 
-		public static async Task DisableErroredMessages(List<MessageEntity> messages) {
+		public static async Task DisableErroredMessages(List<MessageEntity> messages)
+		{
 			using var context = new DatabaseContext();
 			var msgIds = messages.Select(msg => msg.Id);
 			await context.Messages.AsQueryable()
@@ -70,7 +74,8 @@ namespace AutomateSender.DatabaseHandler
 				.UpdateAsync(msg => new MessageEntity { Activated = false });
 		}
 
-		public static async Task DisabledOneTimeMessage(List<MessageEntity> messages, FileHandler fileHandler) {
+		public static async Task DisabledOneTimeMessage(List<MessageEntity> messages, FileHandler fileHandler)
+		{
 			using var context = new DatabaseContext();
 			List<string> messagesIds = messages.ConvertAll(el => el.Id);
 			await context.Messages.AsQueryable()
@@ -81,10 +86,14 @@ namespace AutomateSender.DatabaseHandler
 			var msgToDeleteIds = msgToDelete.Select(el => el.Id);
 			context.Files.AsQueryable().Where(el => filesToDeleteIds.Contains(el.Id));
 			context.Messages.AsQueryable().Where(el => msgToDeleteIds.Contains(el.Id));
-			foreach (string fileId in filesToDeleteIds) {
-				try {
+			foreach (string fileId in filesToDeleteIds)
+			{
+				try
+				{
 					fileHandler.DeleteFile(fileId);
-				} catch(Exception err) {
+				}
+				catch (Exception err)
+				{
 					Log.Error($"Could not delete file {fileId} err: {err}");
 				}
 			}
@@ -97,11 +106,14 @@ namespace AutomateSender.DatabaseHandler
 		public static async Task<bool> CheckConnection()
 		{
 			Log.Information("Connection String : " + Constants.connectionString);
-			try {
+			try
+			{
 				using var context = new DatabaseContext();
 				await context.Database.EnsureCreatedAsync();
 				return true;
-			} catch(Exception e) {
+			}
+			catch (Exception e)
+			{
 				Log.Fatal(e.ToString());
 				return false;
 			}

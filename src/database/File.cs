@@ -8,6 +8,7 @@ namespace AutomateSender.DatabaseHandler
 	{
 		[Key]
 		public string Id { get; set; }
+		public string Name { get; set; }
 		public string MessageId { get; set; }
 		public MessageEntity Message { get; set; }
 	}
